@@ -1,0 +1,27 @@
+name: Sincronizacion Automatizada AutoLogi
+
+on:
+  schedule:
+    - cron: '0 13 * * *' # Esto es 8 AM hora Colombia cada día
+  workflow_dispatch: # Esto activa el botón para hacerlo manual
+
+jobs:
+  run-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Instalar librerias
+        run: pip install -r requirements.txt
+
+      - name: Ejecutar script de sincronizacion
+        env:
+          DB_URL: ${{ secrets.DB_URL }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python sync_supabase.py
