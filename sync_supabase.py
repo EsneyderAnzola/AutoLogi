@@ -7,7 +7,7 @@ from gspread_dataframe import set_with_dataframe
 from google.oauth2.service_account import Credentials
 
 def sync():
-    # 1. Configurar conexiones desde los Secrets
+    # 1. Configurar conexiones desde los Secrets de GitHub
     db_url = os.environ['DB_URL']
     sheet_id = '1MhtXjziojWiYjLRbYkmfrd-Dt2vsie102n6_CUFteFg'
     
@@ -21,30 +21,40 @@ def sync():
     client = gspread.authorize(creds)
     spreadsheet = client.open_by_key(sheet_id)
 
-    # Lista de tablas que quieres llevar al Sheets
-    tablas = ["Ingreso", "Inventario"]
+    # 4. Obtener la lista de TODAS las tablas públicas de Supabase
+    try:
+        with engine.connect() as conn:
+            query_tablas = text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+            result = conn.execute(query_tablas)
+            # Guardamos todos los nombres en una lista
+            tablas = [row[0] for row in result]
+        
+        print(f"📂 Tablas detectadas para sincronizar: {tablas}")
+    except Exception as e:
+        print(f"❌ Error al listar las tablas: {e}")
+        return
 
+    # 5. Sincronizar cada tabla detectada
     for t in tablas:
         try:
-            print(f"🔄 Procesando tabla: {t}...")
+            print(f"🔄 Sincronizando tabla: {t}...")
             with engine.connect() as conn:
-                # Usamos comillas dobles por si el nombre tiene mayúsculas
-                query = text(f'SELECT * FROM "{t}"')
-                df = pd.read_sql(query, conn)
+                # SELECT * de la tabla actual
+                df = pd.read_sql(text(f'SELECT * FROM "{t}"'), conn)
             
-            # Buscar la hoja o crearla si no existe
+            # Buscar la hoja por nombre; si no existe, la crea
             try:
                 worksheet = spreadsheet.worksheet(t)
             except gspread.exceptions.WorksheetNotFound:
                 worksheet = spreadsheet.add_worksheet(title=t, rows="100", cols="20")
             
-            # Limpiar la hoja y pegar los datos nuevos
+            # Limpiar la hoja y pegar los nuevos datos
             worksheet.clear()
             set_with_dataframe(worksheet, df)
             print(f"✅ Sincronizada con éxito: {t}")
             
         except Exception as e:
-            print(f"❌ Error en tabla {t}: {e}")
+            print(f"❌ Error al procesar la tabla {t}: {e}")
 
 if __name__ == "__main__":
     sync()
