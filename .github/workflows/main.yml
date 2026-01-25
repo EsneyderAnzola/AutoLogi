@@ -2,23 +2,26 @@ name: Sincronizacion Automatizada AutoLogi
 
 on:
   schedule:
-    - cron: '0 13 * * *' # Esto es 8 AM hora Colombia cada día
-  workflow_dispatch: # Esto activa el botón para hacerlo manual
+    # Se ejecuta dos veces al día (Hora UTC)
+    # 03:00 UTC = 10:00 PM COT
+    # 14:00 UTC = 09:00 AM COT
+    - cron: '0 3,14 * * *'
+  workflow_dispatch: # Permite ejecución manual desde la pestaña Actions
 
 jobs:
   run-sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar codigo
+      - name: Descargar codigo del repositorio
         uses: actions/checkout@v3
 
-      - name: Configurar Python
+      - name: Configurar entorno de Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Instalar librerias
-        run: pip install -r requirements.txt
+      - name: Instalar librerias necesarias
+        run: pip install pandas sqlalchemy psycopg2-binary gspread gspread-dataframe google-auth
 
       - name: Ejecutar script de sincronizacion
         env:
