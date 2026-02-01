@@ -5,7 +5,6 @@ from sqlalchemy import create_engine, text
 import gspread
 from gspread_dataframe import set_with_dataframe
 from google.oauth2.service_account import Credentials
-from datetime import datetime
 
 def sync():
     # 1. Configurar conexiones desde los Secrets de GitHub
@@ -28,17 +27,21 @@ def sync():
         with engine.connect() as conn:
             # Traer solo datos desde el 30 de enero de 2026
             query = text('''
-                SELECT * FROM "Ingreso" 
+                SELECT telefono, created, nombre, cedula, ciudad, grupo, pdv, latitud, "Longitud", foto, "Cierre", "Seccion"
+                FROM "Ingreso" 
                 WHERE created >= '2026-01-30 00:00:00'
+                ORDER BY created DESC
             ''')
             df = pd.read_sql(query, conn)
         
         # Convertir formato de fecha desde created
-        if 'created' in df.columns:
-            df['Fecha'] = pd.to_datetime(df['created'], errors='coerce').dt.strftime('%Y-%m-%d %H:%M:%S')
+        df['Fecha'] = pd.to_datetime(df['created'], errors='coerce').dt.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Eliminar la columna created original ya que tenemos Fecha
+        df = df.drop(columns=['created'])
         
         # Estructura final con el orden exacto de columnas
-        columnas_orden = [
+        df_final = df[[
             'telefono',    # Columna A
             'Fecha',       # Columna B (viene de created)
             'nombre',      # Columna C
@@ -51,11 +54,7 @@ def sync():
             'foto',        # Columna J
             'Cierre',      # Columna K
             'Seccion'      # Columna L
-        ]
-        
-        # Seleccionar solo las columnas que existen en ese orden
-        columnas_disponibles = [col for col in columnas_orden if col in df.columns]
-        df_final = df[columnas_disponibles]
+        ]]
         
         # Buscar la hoja "Ingreso"; si no existe, la crea
         try:
@@ -63,7 +62,7 @@ def sync():
         except gspread.exceptions.WorksheetNotFound:
             worksheet = spreadsheet.add_worksheet(title='Ingreso', rows="1000", cols="12")
         
-        # Limpiar la hoja y pegar los nuevos datos
+        # ELIMINAR datos previos y pegar los nuevos datos
         worksheet.clear()
         set_with_dataframe(worksheet, df_final)
         print(f"✅ Sincronizada con éxito: Ingreso ({len(df_final)} registros desde 2026-01-30)")
@@ -73,3 +72,4 @@ def sync():
 
 if __name__ == "__main__":
     sync()
+
