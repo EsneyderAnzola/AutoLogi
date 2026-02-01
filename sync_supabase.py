@@ -26,8 +26,9 @@ def sync():
         
         with engine.connect() as conn:
             # Traer solo datos desde el 30 de enero de 2026
+            # Usar nombres en minúsculas como están en la BD
             query = text('''
-                SELECT telefono, nombre, cedula, ciudad, grupo, pdv, latitud, "Longitud", foto, "Cierre", "Seccion"
+                SELECT telefono, nombre, cedula, ciudad, grupo, pdv, latitud, longitud, foto, cierre, seccion
                 FROM "Ingreso" 
                 WHERE created >= '2026-01-30 00:00:00'
                 ORDER BY created DESC
@@ -39,6 +40,13 @@ def sync():
         if len(df) == 0:
             print("⚠️ No hay datos para sincronizar desde el 2026-01-30")
             return
+        
+        # Renombrar columnas para que tengan la primera letra en mayúscula como quieres en el sheet
+        df = df.rename(columns={
+            'longitud': 'Longitud',
+            'cierre': 'Cierre',
+            'seccion': 'Seccion'
+        })
         
         # Estructura final con el orden exacto
         df_final = df[[
@@ -80,5 +88,6 @@ def sync():
 
 if __name__ == "__main__":
     sync()
+
 
 
