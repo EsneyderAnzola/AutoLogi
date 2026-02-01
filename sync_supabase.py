@@ -27,40 +27,33 @@ def sync():
         with engine.connect() as conn:
             # Traer solo datos desde el 30 de enero de 2026
             query = text('''
-                SELECT telefono, created, nombre, cedula, ciudad, grupo, pdv, latitud, "Longitud", foto, "Cierre", "Seccion"
+                SELECT telefono, nombre, cedula, ciudad, grupo, pdv, latitud, "Longitud", foto, "Cierre", "Seccion"
                 FROM "Ingreso" 
                 WHERE created >= '2026-01-30 00:00:00'
                 ORDER BY created DESC
             ''')
             df = pd.read_sql(query, conn)
         
-        # Convertir formato de fecha desde created
-        df['Fecha'] = pd.to_datetime(df['created'], errors='coerce').dt.strftime('%Y-%m-%d %H:%M:%S')
-        
-        # Eliminar la columna created original ya que tenemos Fecha
-        df = df.drop(columns=['created'])
-        
-        # Estructura final con el orden exacto de columnas
+        # Estructura final con el orden exacto de la segunda imagen
         df_final = df[[
             'telefono',    # Columna A
-            'Fecha',       # Columna B (viene de created)
-            'nombre',      # Columna C
-            'cedula',      # Columna D
-            'ciudad',      # Columna E
-            'grupo',       # Columna F
-            'pdv',         # Columna G
-            'latitud',     # Columna H
-            'Longitud',    # Columna I
-            'foto',        # Columna J
-            'Cierre',      # Columna K
-            'Seccion'      # Columna L
+            'nombre',      # Columna B
+            'cedula',      # Columna C
+            'ciudad',      # Columna D
+            'grupo',       # Columna E
+            'pdv',         # Columna F
+            'latitud',     # Columna G
+            'Longitud',    # Columna H
+            'foto',        # Columna I
+            'Cierre',      # Columna J
+            'Seccion'      # Columna K
         ]]
         
         # Buscar la hoja "Ingreso"; si no existe, la crea
         try:
             worksheet = spreadsheet.worksheet('Ingreso')
         except gspread.exceptions.WorksheetNotFound:
-            worksheet = spreadsheet.add_worksheet(title='Ingreso', rows="1000", cols="12")
+            worksheet = spreadsheet.add_worksheet(title='Ingreso', rows="1000", cols="11")
         
         # ELIMINAR datos previos y pegar los nuevos datos
         worksheet.clear()
@@ -72,4 +65,5 @@ def sync():
 
 if __name__ == "__main__":
     sync()
+
 
