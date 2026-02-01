@@ -34,7 +34,13 @@ def sync():
             ''')
             df = pd.read_sql(query, conn)
         
-        # Estructura final con el orden exacto de la segunda imagen
+        print(f"📊 Datos obtenidos de Supabase: {len(df)} registros")
+        
+        if len(df) == 0:
+            print("⚠️ No hay datos para sincronizar desde el 2026-01-30")
+            return
+        
+        # Estructura final con el orden exacto
         df_final = df[[
             'telefono',    # Columna A
             'nombre',      # Columna B
@@ -49,19 +55,28 @@ def sync():
             'Seccion'      # Columna K
         ]]
         
-        # Buscar la hoja "Ingreso"; si no existe, la crea
+        # Buscar o crear la hoja "Ingreso"
         try:
             worksheet = spreadsheet.worksheet('Ingreso')
+            print("✅ Hoja 'Ingreso' encontrada")
         except gspread.exceptions.WorksheetNotFound:
-            worksheet = spreadsheet.add_worksheet(title='Ingreso', rows="1000", cols="11")
+            print("📝 Hoja 'Ingreso' no encontrada, creando nueva hoja...")
+            worksheet = spreadsheet.add_worksheet(title='Ingreso', rows=str(len(df_final) + 100), cols="11")
+            print("✅ Hoja 'Ingreso' creada")
         
         # ELIMINAR datos previos y pegar los nuevos datos
+        print("🗑️ Limpiando datos previos...")
         worksheet.clear()
-        set_with_dataframe(worksheet, df_final)
-        print(f"✅ Sincronizada con éxito: Ingreso ({len(df_final)} registros desde 2026-01-30)")
+        
+        print("📝 Escribiendo nuevos datos...")
+        set_with_dataframe(worksheet, df_final, include_index=False, include_column_header=True, resize=True)
+        
+        print(f"✅ Sincronización completada: {len(df_final)} registros escritos en 'Ingreso'")
         
     except Exception as e:
         print(f"❌ Error al procesar la tabla Ingreso: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     sync()
