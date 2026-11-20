@@ -13,14 +13,16 @@ jobs:
       - name: Descargar codigo del repositorio
         uses: actions/checkout@v4
 
-      - name: Configurar entorno de Python
-        uses: actions/setup-python@v5
+      - name: Instalar uv y Python
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.12'
+          enable-cache: true
+          cache-suffix: autologi
 
       - name: Instalar librerias necesarias
         run: |
-          pip install pandas sqlalchemy "psycopg[binary]" psycopg2-binary gspread gspread-dataframe google-auth
+          uv pip install --system pandas sqlalchemy "psycopg[binary]" psycopg2-binary gspread gspread-dataframe google-auth
 
       - name: Ejecutar script de sincronizacion
         env:
