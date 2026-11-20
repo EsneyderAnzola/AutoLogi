@@ -103,11 +103,11 @@ def sync():
     # 2) Limpiar solo las hojas que ya existian (1 llamada)
     to_clear = [q(t) for t in data if t in existing]
     if to_clear:
-        sp.values_batch_clear(to_clear)
+        sp.values_batch_clear(body={'ranges': to_clear})
 
     # 3) Escribir todo de una vez (1 llamada)
     if data:
-        sp.values_batch_update({
+        sp.values_batch_update(body={
             'valueInputOption': 'USER_ENTERED',
             'data': [{'range': f"{q(t)}!A1", 'values': v} for t, v in data.items()],
         })
