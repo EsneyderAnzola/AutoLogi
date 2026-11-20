@@ -21,9 +21,7 @@ jobs:
           cache-dependency-glob: requirements.txt
 
       - name: Instalar librerias necesarias
-        run: |
-          uv venv
-          uv pip install -r requirements.txt
+        run: uv pip install -r requirements.txt
 
       - name: Ejecutar script de sincronizacion
         env:
