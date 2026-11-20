@@ -1,5 +1,6 @@
 pandas
 sqlalchemy
+psycopg[binary]
 psycopg2-binary
 gspread
 gspread-dataframe
